@@ -18,7 +18,7 @@ const typeDefs = gql`
         password: String!
     }
     type Query{
-        obtenerCurso: String
+        obtenerCurso: Usuario
     }
 
     type Mutation {
