@@ -19,6 +19,25 @@ const resolvers = {
             const usuarioId = await jwt.verify(token, process.env.SECRETA)
 
             return usuarioId
+        },
+        obtenerProductos: async () => {
+            try {
+                const productos = await Producto.find({});
+                return productos;
+            } catch (error) {
+                console.log(error);
+            }
+        },
+        obtenerProducto: async (_, {id}) => {
+           
+            //Revisar si el producto existe
+            const producto = await Producto.findById(id);
+            
+            if(!producto) {
+                throw new Error('Producto no encontrado');
+            }
+
+            return producto;
         }
     }, 
     Mutation: {
@@ -63,6 +82,45 @@ const resolvers = {
                 return {
                     token: crearToken(existeUsuario, process.env.SECRETA, '24h')
                 }
+            },
+            nuevoProducto: async (_, {input}) => {
+                try {
+                    const producto = new Producto(input);
+
+                    //almacenar en la bd
+                    const resultado = await producto.save();
+
+                    return resultado;
+                } catch (error) {
+                    console.log(error);
+                }
+
+            },
+            actualizarProducto: async (_, {id, input}) => {
+                 //Revisar si el producto existe
+                const producto = await Producto.findById(id);
+                
+                if(!producto) {
+                    throw new Error('Producto no encontrado');
+                }
+
+                //Guardar producto en la bd
+                producto = await Producto.findOneAndUpdate({_id: id}, input, {new: true});
+
+                return producto;
+            },
+            eliminarProducto: async (_, {id}) =>{
+                 //Revisar si el producto existe
+                 const producto = await Producto.findById(id);
+                
+                 if(!producto) {
+                     throw new Error('Producto no encontrado');
+                 }
+
+                 await Producto.findByIdAndDelete({_id: id});
+
+                 return "Producto eliminado"; 
+ 
             }
        
     }
