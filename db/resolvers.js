@@ -39,6 +39,23 @@ const resolvers = {
             }
 
             return producto;
+        },
+        obtenerClientes: async () => {
+            try {
+                const clientes = await Cliente.find({});
+                return clientes;
+            } catch (error) {
+                console.log(error);
+            }
+        },
+        obtenerClientesVendedor: async (_, {}, ctx) => {
+            try {
+                const clientes = await Cliente.find({vendedor: ctx.usuario.id.toString()});
+                return clientes;
+            } catch (error) {
+                console.log(error);
+            }
+
         }
     }, 
     Mutation: {
@@ -123,7 +140,9 @@ const resolvers = {
                  return "Producto eliminado"; 
  
             },
-            nuevoCliente: async (_, {input}) => {
+            nuevoCliente: async (_, {input}, ctx) => {
+
+                console.log(ctx);
 
                 const { email } = input;
                 // VErificar si el cliente esta registrado
@@ -134,7 +153,7 @@ const resolvers = {
                 
                 const nuevoCliente = new Cliente(input);
                 // Asignar vendedor
-                nuevoCliente.vendedor = "";
+                nuevoCliente.vendedor = ctx.usuario.id;
 
                 // Guardar en la base de datos
                 try {
