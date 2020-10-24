@@ -56,6 +56,21 @@ const resolvers = {
                 console.log(error);
             }
 
+        },
+        obtenerCliente: async (_, {id}, ctx) => {
+            //Revisar si el cliente exite
+            const cliente = await Cliente.findById({id});
+
+            if (!cliente) {
+                throw new Error('Cliente no encontrado');
+            }
+
+            //Quien lo creo
+            if(cliente.vendedor.toString() !== ctx.usuario.id){
+                throw new Error('No tienes las credenciales');
+            }
+
+            return cliente;
         }
     }, 
     Mutation: {
@@ -164,6 +179,38 @@ const resolvers = {
                 }
 
                 
+            },
+            actualizarCliente: async (_, {id, input}, ctx) => {
+                // Verificar si existe o no
+                const cliente = await Cliente.findById(id);
+
+                if(!cliente){
+                    throw new Error('el cliente no existe');
+                }
+                // Verificar si el vendedor es quien 
+                if (cliente.vendedor.toString() !== ctx.usuario.id) {
+                    throw new Error('No tienes las credenciales');
+                }
+
+                // guardar el cliente
+                cliente = await Cliente.findByIdAndUpdate({_id: id}, input, {new: true});
+                return cliente;
+            },
+            eliminarCliente: async (_, {id}, ctx) => {
+                // Verificar si existe o no
+                const cliente = await Cliente.findById(id);
+
+                if(!cliente){
+                    throw new Error('el cliente no existe');
+                }
+                // Verificar si el vendedor es quien 
+                if (cliente.vendedor.toString() !== ctx.usuario.id) {
+                    throw new Error('No tienes las credenciales');
+                }
+                // Eliminar cliente
+                await Cliente.findByIdAndDelete({_id: id});
+                return "Cliente eliminado";
+
             }
        
     }
