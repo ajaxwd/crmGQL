@@ -88,6 +88,21 @@ const resolvers = {
             } catch (error) {
                 console.log(error);
             }
+        },
+        obtenerPedido: async (_, {id}, ctx) => {
+           // Si el pedido existe o no
+           const pedido = await Pedido.findById(id);
+           if (!pedido) {
+               throw new Error('Pedido no encontrado');
+           }
+
+           // Solo quien lo creo puedo verlo
+           if (pedido.vendedor.toString() !== ctx.usuario.id) {
+               throw new Error('No tienes las credenciales');
+           }
+
+           // retornar resultado
+           return pedido;
         }
     }, 
     Mutation: {
@@ -267,6 +282,50 @@ const resolvers = {
 
                 //Guardarlo en la base de datos
                 const resultado = await nuevoPedido.save();
+                return resultado;
+            },
+            actualiarPedido: async (_, {id, input}, ctx) => {
+
+                const { cliente } = input;
+
+                // Si el pedido existe o no
+                const existePedido = await Pedido.findById(id);
+                if (!existePedido) {
+                    throw new Error('Pedido no existe');
+                }
+
+                // Si el cliente existe
+                const existeCliente = await Cliente.findById(cliente);
+                if (!existeCliente) {
+                    throw new Error('Cliente no existe');
+                }
+
+                // Solo quien lo creo puedo verlo
+                if (existeCliente.vendedor.toString() !== ctx.usuario.id) {
+                    throw new Error('No tienes las credenciales');
+                }
+
+                //Revisar el stock
+                if(input.pedido){
+                    for await ( const articulo of input.pedido){
+                        const {id} = articulo;
+    
+                        const producto = await Producto.findById({id});
+    
+                        if (articulo.cantidad > producto.existencia) {
+                            throw new Error(`el articulo: ${producto.nombre} excede la cantidad disponible`);
+                        } else {
+                            // restar la cantidad a lo disponible
+                            producto.existencia = producto.existencia - articulo.cantidad;
+    
+                            await producto.save();
+                        }
+                    }
+                }
+                
+
+                // Guardar el pedido
+                const resultado = await Pedido.findByIdAndUpdate({_id:id}, input, {new: true});
                 return resultado;
             }
        
