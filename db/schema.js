@@ -49,6 +49,16 @@ const typeDefs = gql`
         cantidad: Int
     }
 
+    type TopClientes {
+        total: Float
+        cliente: [Cliente]
+    }
+
+    type TopVendedores {
+        total: Float
+        vendedor: [Usuario]
+    }
+
     input UsuarioInput {
         nombre: String!
         apellido: String!
@@ -112,6 +122,12 @@ const typeDefs = gql`
         obtenerPedidos: [Pedido]
         obtenerPedidosVendedor: [Pedido]
         obtenerPedido(id: ID!): Pedido
+        obteniendoPedidosEstado(estado: String!): [Pedido]
+
+        # Busquedas avanzadas
+        mejoresClientes: [TopClientes]
+        mejoresVendedores: [TopVendedores]
+        buscarProducto(texto: String!): [Producto]
     }
 
     type Mutation {
@@ -130,6 +146,7 @@ const typeDefs = gql`
         # Pedidos
         nuevoPedido(input: PedidoInput): Pedido
         actualiarPedido(id: ID, input: PedidoInput): Pedido
+        eliminarPedido(id: ID!): String
     }
 `;
 

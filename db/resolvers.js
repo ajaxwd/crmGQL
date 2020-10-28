@@ -103,6 +103,63 @@ const resolvers = {
 
            // retornar resultado
            return pedido;
+        },
+        obteniendoPedidosEstado: async (_, { estado }, ctx) => {
+            const pedidos = await Pedido.find({vendedor: ctx.usuario.id, estado});
+
+            return pedidos;
+        },
+        mejoresClientes: async () => {
+            const clientes = await Cliente.aggregate([
+                { $match : { estado: "COMPLETADO"} },
+                { $group : {
+                    _id: "$cliente",
+                    total: { $sum: '$total'}
+                }},
+                { 
+                    $lookup: {
+                        from: 'clientes',
+                        localField: '_id',
+                        foreignField: "_id",
+                        as: "cliente"
+                    }
+                },
+                {
+                    $sort: {total: -1}
+                }
+            ]);
+
+            return clientes;
+        }, 
+        mejoresVendedores: async () => {
+            const vendedores = await Pedido.find([
+                { $match: { estado: "COMPLETADO"} },
+                { $group: {
+                    _id: "vendedor",
+                    total: {$sum: '$total'}
+                }},
+                { 
+                    $lookup: {
+                        from: 'usuarios',
+                        localField: '_id',
+                        foreignField: "_id",
+                        as: "vendedor"
+                    }
+                },
+                {
+                    $limit: 3
+                },
+                {
+                    $sort: { total: -1}
+                }
+            ]);
+
+            return vendedores;
+        },
+        buscarProducto: async (_,{texto}) => {
+            const productos = await Producto.find({ $text: {$search: texto }}).limit(10);
+
+            return productos;
         }
     }, 
     Mutation: {
@@ -327,6 +384,22 @@ const resolvers = {
                 // Guardar el pedido
                 const resultado = await Pedido.findByIdAndUpdate({_id:id}, input, {new: true});
                 return resultado;
+            },
+            eliminarPedido: async (_,{id}, ctx) => {
+                // verificar si el pedidoexiste o no
+                const pedido = Pedido.findById(id);
+                if (!pedido) {
+                    throw new Error('El pedido no existe');
+                }
+
+                // verificar si el vendedor es quien lo borra
+                if(pedido.vendedor.toString() !== ctx.usuario.id){
+                    throw new Error('No tienes las credenciales');
+                }
+
+                // eliminar pedido de la base de datos
+                await Pedido.findByIdAndDelete({_id: id});
+                return "Pedido Eliminado";
             }
        
     }
