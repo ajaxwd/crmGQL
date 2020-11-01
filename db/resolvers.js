@@ -18,7 +18,7 @@ const crearToken = (usuario, secreta, expiresIn) => {
 const resolvers = {
     Query: {
         obtenerUsuario: async (_, {}, ctx) => {
-            return ctx;
+            return ctx.usuario;
         },
         obtenerProductos: async () => {
             try {
